@@ -3,7 +3,12 @@
 from collections import defaultdict
 
 from .models import TestResult
-from .owasp_metadata import OWASP_LLM_CATEGORIES, get_owasp_category, get_owasp_markers_from_test
+from .owasp_metadata import (
+    OWASP_LLM_CATEGORIES,
+    get_owasp_category,
+    get_owasp_markers_from_test,
+    resolve_edition,
+)
 
 
 def _published_id(marker: str) -> str:
@@ -516,10 +521,30 @@ def get_coverage_gaps(results: list[TestResult]) -> dict:
     tested_markers = exercised_categories(results)
     all_markers = set(OWASP_LLM_CATEGORIES.keys())
 
+    # ‼ Resolve through get_owasp_category, never off OWASP_LLM_CATEGORIES directly.
+    # The module table holds the 2025 ids and names as its storage form, and the edition in
+    # force is applied by get_owasp_category. Reading `cat.id` / `cat.name` off the raw table
+    # therefore publishes 2025 values whatever edition the run is in.
+    #
+    # That is not hypothetical. It shipped, and a first-time reader met it on 2026-10-28: one
+    # scan printed the category table and this coverage footer eight lines apart, the table
+    # saying `LLM07 Misinformation 4 cases` and `LLM08 Hidden Context Exposure not exercised`
+    # while the footer said `LLM07: System Prompt Leakage` and `LLM08: Vector and Embedding
+    # Weaknesses` were NOT exercised. Both blocks were internally right and they could not
+    # both be read, so a reader deciding whether their app had actually been tested could not
+    # tell. The SARIF was clean throughout, which is why no gate caught it: the defect lived
+    # only in the rendering, and the table above had already been migrated.
+    #
+    # `edition` is returned so a caller can state which edition it is rendering rather than
+    # leaving the reader to infer it from the names.
+    edition = resolve_edition()
+
     untested_markers = all_markers - tested_markers
     untested = []
     for marker in sorted(untested_markers):
-        cat = OWASP_LLM_CATEGORIES[marker]
+        cat = get_owasp_category(marker, edition)
+        if cat is None:
+            continue
         untested.append({
             "marker": marker,
             "id": cat.id,
@@ -529,7 +554,7 @@ def get_coverage_gaps(results: list[TestResult]) -> dict:
 
     tested = []
     for marker in sorted(tested_markers):
-        cat = OWASP_LLM_CATEGORIES.get(marker)
+        cat = get_owasp_category(marker, edition)
         if cat:
             tested.append({"marker": marker, "id": cat.id, "name": cat.name})
 
@@ -543,4 +568,5 @@ def get_coverage_gaps(results: list[TestResult]) -> dict:
         "coverage_percent": round((covered / total * 100), 1) if total > 0 else 0,
         "tested": tested,
         "untested": untested,
+        "edition": edition,
     }

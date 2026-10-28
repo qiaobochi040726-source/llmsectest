@@ -69,7 +69,7 @@ STEP 6 - Collect the ground truth the app already holds.
 These four unlock four of the ten categories. Report each one as found or absent, and
 give the file and line for each one you found.
   a) The system prompt the application sends. Give me the file path.
-     This becomes --app-prompt <path> and enables LLM07.
+     This becomes --app-prompt <path> and enables LLM08 (LLM07 in the 2025 edition).
   b) A real secret the application holds in its context or prompt: an API key, an
      internal URL, a customer identifier. Give me the file and line, NOT the value.
      I will pass the value myself as --app-secret. This enables LLM02.

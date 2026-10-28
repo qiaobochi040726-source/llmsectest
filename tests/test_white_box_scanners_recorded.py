@@ -68,15 +68,26 @@ def test_a_run_given_no_white_box_input_records_none(monkeypatch):
     assert "white_box_scanners" not in props
 
 
-@pytest.mark.parametrize("variable, flag, category", [
-    (envvars.REPO, "--repo", "LLM03"),
-    (envvars.MODEL_SCAN, "--model-scan", "LLM04"),
+@pytest.mark.parametrize("variable, flag, marker", [
+    (envvars.REPO, "--repo", "owasp_llm03"),
+    (envvars.MODEL_SCAN, "--model-scan", "owasp_llm04"),
 ])
 def test_the_app_scan_footer_stops_asking_for_a_flag_it_was_given(
-        monkeypatch, capsys, tmp_path, variable, flag, category):
+        monkeypatch, capsys, tmp_path, variable, flag, marker):
     """The footer is the coverage map a reader trusts to say what went untested, so a
-    footer that contradicts the scan printed above it is worse than no footer."""
+    footer that contradicts the scan printed above it is worse than no footer.
+
+    ‼ The expected id is RESOLVED from the marker rather than written here as a literal.
+    It was a literal until 2026-10-28 ("LLM03" for --repo, "LLM04" for --model-scan) and
+    those are the 2025 ids, which is why this test passed while the footer published the
+    wrong edition: `cid()` derived the id from the marker string too, so the test and the
+    code made the same mistake and agreed with each other. A test that hardcodes a
+    published id cannot catch an edition defect in the thing that publishes it.
+    """
     from llmsectest.__main__ import _print_coverage_footer
+    from llmsectest.reporting.owasp_metadata import get_owasp_category
+
+    category = get_owasp_category(marker).id
 
     # `run_suite` writes the scanner variables straight into `os.environ` and never
     # restores them, so a test that ran earlier in this process can leave one set. Cleared

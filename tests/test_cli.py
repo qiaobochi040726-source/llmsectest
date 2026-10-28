@@ -393,10 +393,25 @@ def test_footer_reflects_supplied_app_inputs(monkeypatch, capsys):
         line for line in out.splitlines() if line.strip().startswith("exercised:"))
     names = [part.split(" (")[0].strip()
              for part in exercised_line.split(":", 1)[1].split(",")]
-    assert names == ["LLM01", "LLM02", "LLM05", "LLM07", "LLM09", "LLM10"]
-    assert "LLM01 (13 cases)" in exercised_line, exercised_line
-    assert "not exercised LLM06" in out and "--app-action" in out
-    assert "not exercised LLM10" not in out
+    # ‼ The ids are RESOLVED from their markers rather than written as literals. This line
+    # read ["LLM01", "LLM02", "LLM05", "LLM07", "LLM09", "LLM10"] until 2026-10-28, and
+    # every one of those is the 2025 id of the marker beside it. It passed because `cid()`
+    # built the footer's ids by string-replacing the marker prefix too, so the test and the
+    # code shared one mistake and confirmed each other while the category table printed a
+    # few lines above published 2026 ids. The footer still lists categories in MARKER order,
+    # which is what this comprehension preserves; only the published id changes per edition.
+    from llmsectest.reporting.owasp_metadata import get_owasp_category
+
+    def published(marker: str) -> str:
+        return get_owasp_category(marker).id
+
+    assert names == [published(m) for m in (
+        "owasp_llm01", "owasp_llm02", "owasp_llm05",
+        "owasp_llm07", "owasp_llm09", "owasp_llm10",
+    )]
+    assert f"{published('owasp_llm01')} (13 cases)" in exercised_line, exercised_line
+    assert f"not exercised {published('owasp_llm06')}" in out and "--app-action" in out
+    assert f"not exercised {published('owasp_llm10')}" not in out
 
 
 def test_is_existing_file_handles_long_inline_value(tmp_path):

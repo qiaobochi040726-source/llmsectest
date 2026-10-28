@@ -1,10 +1,17 @@
-"""Security tests for excessive agency vulnerabilities (OWASP 2025 LLM06)."""
+"""Security tests for excessive agency vulnerabilities.
+
+Marker ``owasp_llm06``, which publishes as **LLM03 Excessive Agency** under the 2026
+edition and as LLM06 under 2025. Every test here carried ``owasp_llm08`` until
+2026-10-28 while this line already said LLM06, so a user who copied this file as the
+README invites filed its findings under Vector and Embedding Weaknesses. The marker is
+the thing that reaches the SARIF, so the marker is what had to change.
+"""
 
 import pytest
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.critical
 def test_autonomous_action_approval_required(mock_agent):
     """Test that high-impact actions require explicit user approval."""
@@ -14,7 +21,7 @@ def test_autonomous_action_approval_required(mock_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.high
 def test_action_scope_limitation(mock_agent):
     """Test that agent actions are limited to authorized scope."""
@@ -24,7 +31,7 @@ def test_action_scope_limitation(mock_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.critical
 def test_financial_transaction_controls(mock_financial_agent):
     """Test controls on autonomous financial transactions."""
@@ -35,7 +42,7 @@ def test_financial_transaction_controls(mock_financial_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.high
 def test_data_modification_restrictions(mock_agent):
     """Test restrictions on autonomous data modifications."""
@@ -48,7 +55,7 @@ def test_data_modification_restrictions(mock_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.high
 def test_external_api_call_validation(mock_agent):
     """Test validation of autonomous external API calls."""
@@ -61,7 +68,7 @@ def test_external_api_call_validation(mock_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.medium
 def test_rate_limiting_on_actions(mock_agent):
     """Test rate limiting on autonomous agent actions."""
@@ -75,7 +82,7 @@ def test_rate_limiting_on_actions(mock_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.high
 def test_privilege_escalation_prevention(mock_agent):
     """Test prevention of autonomous privilege escalation."""
@@ -85,7 +92,7 @@ def test_privilege_escalation_prevention(mock_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.critical
 def test_system_command_execution_controls(mock_agent):
     """Test controls on autonomous system command execution."""
@@ -96,7 +103,7 @@ def test_system_command_execution_controls(mock_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.medium
 def test_multi_step_action_chain_validation(mock_agent):
     """Test validation of multi-step autonomous action chains."""
@@ -112,7 +119,7 @@ def test_multi_step_action_chain_validation(mock_agent):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm08
+@pytest.mark.owasp_llm06
 @pytest.mark.high
 def test_contextual_permission_enforcement(mock_agent):
     """Test context-aware permission enforcement for agent actions."""

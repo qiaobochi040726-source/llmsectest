@@ -77,9 +77,11 @@ def app_inputs_from_env() -> tuple[str, str | None, tuple[str, ...], str | None,
     known_poison)`` — the app's own system prompt (``""`` if unknown), a real secret
     the app holds (``None`` if none named), the app's privileged action signatures
     (``()`` if none), a confidential canary planted in the app's retrieved corpus
-    (``None`` if none named, enables LLM08 retrieval-exposure probes), and the marker
+    (``None`` if none named, enables LLM09 retrieval-exposure probes), and the marker
     an indexed *poisoned* document instructs the app to emit (``None`` if none named,
-    enables LLM08 indirect-prompt-injection-via-retrieved-document probes).
+    enables LLM09 indirect-prompt-injection-via-retrieved-document probes). Both ids
+    are the 2026 edition's, which is what this tool publishes; the marker key behind
+    them stays ``owasp_llm08`` because marker keys never move across editions.
     """
     prompt = os.environ.get(APP_PROMPT, "")
     secret = os.environ.get(APP_SECRET) or None

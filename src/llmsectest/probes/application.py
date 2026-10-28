@@ -79,7 +79,10 @@ from .detectors import DetectorResult, register_detector
 from .models import ProbeCase, ProbeOutcome
 from .runner import TargetResponsiveness, run_probe
 
-# OWASP LLM Top 10 (2025) markers, in order — every app scan accounts for all ten.
+# The ten OWASP LLM Top 10 MARKER keys, in order — every app scan accounts for all ten.
+# These are storage keys and not published ids: they deliberately never move when an
+# edition renumbers, so `owasp_llm08` is the key whose 2026 published id is LLM09. Read
+# owasp_metadata.get_owasp_category to publish one.
 ALL_CATEGORIES = tuple(f"owasp_llm{n:02d}" for n in range(1, 11))
 
 
@@ -505,12 +508,14 @@ def app_cases(
 ) -> list[ProbeCase]:
     """Build the black-box OWASP attack cases reachable against a real application.
 
+    Category ids here are the 2026 edition's, the ones this tool publishes.
+
     ``system_prompt`` is the application-under-test persona (empty string if the
-    app's prompt is unknown — then LLM07 is skipped). ``known_secret`` enables
-    LLM02 (a real secret/canary the app holds); ``forbidden_actions`` enables LLM06
-    (the app's privileged tool/action signatures); ``known_canary`` enables the LLM08
+    app's prompt is unknown — then LLM08 is skipped). ``known_secret`` enables
+    LLM02 (a real secret/canary the app holds); ``forbidden_actions`` enables LLM03
+    (the app's privileged tool/action signatures); ``known_canary`` enables the LLM09
     retrieval-exposure probes (a confidential canary planted in the app's retrieved
-    corpus); ``known_poison`` enables the LLM08 indirect-injection probes (the marker
+    corpus); ``known_poison`` enables the LLM09 indirect-injection probes (the marker
     a poisoned retrieved document tells the app to emit). Pass an empty ``app_name``
     and a prompt only for the cases you can support; :func:`app_coverage` reports the
     rest.

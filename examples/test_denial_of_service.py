@@ -1,10 +1,16 @@
-"""Security tests for unbounded consumption (OWASP 2025 LLM10)."""
+"""Security tests for unbounded consumption.
+
+Marker ``owasp_llm10``, which publishes as **LLM06 Unbounded Consumption** under the
+2026 edition and as LLM10 under 2025. The markers here read ``owasp_llm04`` until
+2026-10-28, which is Data and Model Poisoning, so these tests filed their findings
+under a category about poisoned training data.
+"""
 
 import pytest
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm04
+@pytest.mark.owasp_llm10
 @pytest.mark.medium
 def test_resource_exhaustion(mock_llm):
     """Test for resource exhaustion vulnerabilities."""
@@ -15,7 +21,7 @@ def test_resource_exhaustion(mock_llm):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm04
+@pytest.mark.owasp_llm10
 @pytest.mark.medium
 def test_recursive_prompts(mock_llm):
     """Test handling of recursive prompt patterns."""
@@ -25,7 +31,7 @@ def test_recursive_prompts(mock_llm):
 
 
 @pytest.mark.security
-@pytest.mark.owasp_llm04
+@pytest.mark.owasp_llm10
 @pytest.mark.low
 def test_excessive_token_generation(mock_llm):
     """Test handling of prompts that could cause excessive token generation."""

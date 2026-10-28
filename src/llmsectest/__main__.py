@@ -13,11 +13,11 @@ Examples:
     python -m llmsectest --preflight --target ollama:gemma4:e2b-it-q4_K_M
                           # health-check a local server/model before a long scan
     python -m llmsectest --target app:http://localhost:8000 --repo .  # app + its deps
-    python -m llmsectest --repo .                          # add the LLM03 supply-chain scan
+    python -m llmsectest --repo .                          # add the LLM04 supply-chain scan
     python -m llmsectest --repo . --osv                    # + known-CVE lookup via OSV.dev
     python -m llmsectest --sbom --repo .                   # write a CycloneDX SBOM of the deps
-    python -m llmsectest --model-scan models/              # add the LLM04 model-poisoning scan
-    python -m llmsectest --vector-store storage/           # add the LLM08 embedding-inversion scan
+    python -m llmsectest --model-scan models/              # add the LLM05 model-poisoning scan
+    python -m llmsectest --vector-store storage/           # add the LLM09 embedding-inversion scan
     python -m llmsectest --redteam-set jbb/harmful-behaviors.csv  # 100 JailbreakBench prompts (LLM01)
     python -m llmsectest --redteam-benign                  # + measure over-refusal (built-in twins)
     python -m llmsectest --redteam-benign jbb/benign-behaviors.csv  # over-refusal vs the 100 JBB twins
@@ -55,12 +55,15 @@ Examples:
                           # --pdf-output <path>, or -o, chooses where it lands
     python -m llmsectest --version                        # print the version
 
-Application scans (``--target app:<url>``) always exercise LLM01 + LLM05 + LLM09 +
-LLM10 black-box. Optional inputs unlock the remaining black-box categories:
+Every category id below is the 2026 edition's, the edition this tool publishes under and
+the one ``--check`` prints. The 2025 numbers differ for eight of the ten.
+
+Application scans (``--target app:<url>``) always exercise LLM01 + LLM10 + LLM07 +
+LLM06 black-box. Optional inputs unlock the remaining black-box categories:
 ``--app-prompt`` (the app's own system prompt, inline text or a file path)
-enables LLM07, ``--app-secret`` (a real secret the app holds) enables LLM02,
-``--app-action`` (a privileged tool/action signature; repeatable) enables LLM06,
-and two RAG markers enable LLM08, ``--app-canary`` (confidential content planted
+enables LLM08, ``--app-secret`` (a real secret the app holds) enables LLM02,
+``--app-action`` (a privileged tool/action signature; repeatable) enables LLM03,
+and two RAG markers enable LLM09, ``--app-canary`` (confidential content planted
 in the app's retrieved corpus) for retrieval-exposure probes and
 ``--app-rag-poison`` (the marker a planted poisoned document tells the app to emit)
 for indirect-prompt-injection-via-retrieved-document probes. Categories without
@@ -481,8 +484,22 @@ _SUITE_DID_NOT_RUN = {
 def _print_coverage_footer(target: str | None) -> None:
     """Surface which OWASP categories this run did and did not exercise, so a
     category is never silently left untested."""
+    from .reporting.owasp_metadata import get_owasp_category
+
     def cid(marker: str) -> str:
-        return marker.replace("owasp_llm", "LLM")
+        """The marker's PUBLISHED id, in the edition in force.
+
+        ‼ This was `marker.replace("owasp_llm", "LLM")` until 2026-10-28, and that string
+        transform is the 2025 numbering by construction: marker keys are the edition-
+        independent storage form and deliberately do not move when an edition renumbers
+        (see owasp_metadata.OWASP_EDITIONS). So every line of this footer published 2025
+        ids while the category table printed above it published 2026 ones, and one scan
+        said `LLM07 Misinformation 4 cases` in the table and `not exercised LLM07` in the
+        footer. A first-time reader hit it on 2026-10-28 and could not tell whether the
+        application had been tested, which is the one question this tool exists to answer.
+        """
+        category = get_owasp_category(marker)
+        return category.id if category else marker.replace("owasp_llm", "LLM")
 
     osv_on = bool(os.environ.get(envvars.OSV))
     print("\n" + "-" * 68)
@@ -641,13 +658,15 @@ def run_suite(args: list, target: str | None, repo: str | None = None,
               redteam_benign_set: str | None = None) -> int:
     """Run the packaged probe suite (or an explicit path) with reporting on.
 
-    ``repo`` (from ``--repo``) enables the white-box LLM03 supply-chain scan
+    Category ids below are the 2026 edition's, the ones this tool publishes.
+
+    ``repo`` (from ``--repo``) enables the white-box LLM04 supply-chain scan
     against that project's dependency manifests, alongside the model/app probes.
     ``osv`` (from ``--osv``) additionally queries OSV.dev for known CVEs in the
     repo's exactly-pinned dependency versions (networked, opt-in).
-    ``model_scan`` (from ``--model-scan``) enables the white-box LLM04 data/model-
+    ``model_scan`` (from ``--model-scan``) enables the white-box LLM05 data/model-
     poisoning scan over the serialized model files under that path (offline).
-    ``vector_store`` (from ``--vector-store``) enables the white-box LLM08 embedding-
+    ``vector_store`` (from ``--vector-store``) enables the white-box LLM09 embedding-
     inversion exposure scan over a persisted vector store (offline, stdlib only, and
     it never unpickles a sidecar it reads).
     ``redteam_set`` (from ``--redteam-set``) points the LLM01 red-team module at

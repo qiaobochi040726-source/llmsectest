@@ -1116,5 +1116,14 @@ def test_the_app_target_footer_reports_the_depth_it_actually_delivered(capsys, m
     monkeypatch.setenv(envvars.APP_SECRET, _APP_INPUTS["known_secret"])
     _print_coverage_footer("app:http://127.0.0.1:9/chat")
     out = capsys.readouterr().out
+
+    # Resolved from the marker, not written as a literal. This read `"LLM09 (4 cases)"`
+    # until 2026-10-28, which is `owasp_llm09`'s 2025 id; under 2026 that category
+    # publishes as LLM07 Misinformation. The literal matched because `cid()` derived the
+    # id from the marker string as well, so the test agreed with the defect it was meant
+    # to guard.
+    from llmsectest.reporting.owasp_metadata import get_owasp_category
+
+    misinformation = get_owasp_category("owasp_llm09").id
     assert "LLM01 (13 cases)" in out, out
-    assert "LLM09 (4 cases)" in out, out
+    assert f"{misinformation} (4 cases)" in out, out
