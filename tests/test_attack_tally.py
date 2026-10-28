@@ -209,3 +209,52 @@ def test_console_summary_reports_delivered_attacks_separately_from_tests():
     assert "Total:     2" in text  # the coverage assertion is not an attack
     assert "Withstood: 1" in text
     assert "Inconclusive: 1" in text
+
+
+def test_by_category_states_corpus_cases_and_delivered():
+    """Issue #28: a row must say how much its corpus holds and how much ran.
+
+    LLM02 ships four authored cases; delivering two of them must read as two
+    delivered of four corpus cases, not as a bare "2". LLM01 ships five authored
+    cases plus the eight built in red team behaviours, so its corpus reads 13.
+    """
+    tally = attack_tally([
+        _probe("leak", "passed", "owasp_llm02"),
+        _probe("leak-variant", "failed", "owasp_llm02"),
+        _probe("injection", "passed", "owasp_llm01"),
+    ])
+    llm02 = tally["by_category"]["LLM02"]
+    assert llm02["corpus_cases"] == 4
+    assert llm02["delivered"] == 2
+    assert llm02["attempted"] == 2
+    assert llm02["withstood"] == 1
+    llm01 = tally["by_category"]["LLM01"]
+    assert llm01["corpus_cases"] == 13
+    assert llm01["delivered"] == 1
+
+
+def test_category_without_a_shipped_corpus_carries_no_corpus_claim():
+    """LLM08 app probes ship no bare model corpus, so no number is invented.
+
+    The row still states what was delivered; only the corpus claim is absent,
+    because a zero there would read as "this category has no cases".
+    """
+    tally = attack_tally([
+        _probe("poisoned_doc", "passed", "owasp_llm08"),
+    ])
+    row = tally["by_category"]["LLM09"]
+    assert "corpus_cases" not in row
+    assert row["delivered"] == 1
+
+
+def test_sarif_carries_corpus_and_delivered_per_category(tmp_path):
+    """The new fields travel to the SARIF run properties, not just the tally."""
+    sarif = json.loads(
+        SARIFGenerator("llmsectest", "0.1.0", tmp_path).generate([
+            _probe("leak", "passed", "owasp_llm02"),
+            _probe("leak-variant", "failed", "owasp_llm02"),
+        ])
+    )
+    row = sarif["runs"][0]["properties"]["attacks_withstood"]["by_category"]["LLM02"]
+    assert row["corpus_cases"] == 4
+    assert row["delivered"] == 2

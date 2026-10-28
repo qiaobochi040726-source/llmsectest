@@ -121,6 +121,31 @@ def _unconfirmed_reason(flag: str) -> str:
     )
 
 
+def _shipped_corpus_cases(marker: str) -> int:
+    """How many cases the shipped corpus holds for one OWASP marker.
+
+    The authored bare model corpus, plus the built in red team set for LLM01,
+    which runs under the same marker in the packaged suite. The import is lazy
+    so importing this module never pulls in the probe packages: the tally is
+    read by report renderers that have no probe to run.
+
+    A run can deliver more than this number. Generated variants and a custom
+    red team set both add cases the shipped corpus does not hold, so a
+    delivered count above the corpus count is extra delivery, not a miscount.
+    A marker with no shipped cases returns zero, and the caller leaves the
+    field off the row rather than publishing a zero that would read as
+    "this category has no cases" for probes built per target instead.
+    """
+    from llmsectest.probes.corpus import cases_for
+
+    count = len(cases_for(marker))
+    if marker == "owasp_llm01":
+        from llmsectest.probes.redteam import redteam_cases
+
+        count += len(redteam_cases(None))
+    return count
+
+
 def withstood_probes(results: list[TestResult]) -> list[TestResult]:
     """The results :func:`attack_tally` counts as ``withstood``, in delivery order.
 
@@ -196,6 +221,16 @@ def attack_tally(results: list[TestResult]) -> dict | None:
     "nothing was attacked". ``by_category`` is keyed by OWASP id and carries the
     category name, so a consumer that has no access to our metadata tables (the
     SARIF renderer reads the file, not our code) can still label the rows.
+
+    Each row also carries the denominator the withstood count needs to be
+    read against. ``delivered`` repeats ``attempted`` under the name a reader
+    looks for, and ``corpus_cases`` states how many cases the shipped corpus
+    holds for that category, so "12 of 13 withstood" reads against "13 of 13
+    delivered" rather than guessed at (issue #28). A row for a category whose
+    probes are built per target rather than shipped in a corpus carries no
+    ``corpus_cases`` key: an absent claim beats a misleading zero. The SARIF
+    generator embeds this tally verbatim, so both fields reach the run
+    properties with no generator change.
     """
     # Whether *any* reply in the run carried the developer's secret, recorded by the probe
     # fixture across every category. Computed before the loop because it changes how a
@@ -215,6 +250,13 @@ def attack_tally(results: list[TestResult]) -> dict | None:
              "attempted": 0, "withstood": 0, "findings": 0, "inconclusive": 0,
              "undelivered": 0, "boundary_refused": 0, "voided": 0},
         )
+        # The shipped corpus size is fixed per marker. See
+        # _shipped_corpus_cases for why a zero count leaves the key off
+        # the row entirely.
+        if "corpus_cases" not in tally:
+            shipped = _shipped_corpus_cases(str(marker))
+            if shipped:
+                tally["corpus_cases"] = shipped
         tally["attempted"] += 1
         if result.outcome == "failed":
             tally["findings"] += 1
@@ -230,6 +272,12 @@ def attack_tally(results: list[TestResult]) -> dict | None:
             tally["withstood"] += 1
     if not by_category:
         return None
+
+    # Delivered is the final attempted count, under the name the row's reader
+    # looks for beside corpus_cases. Set once counting is done, so a row
+    # never carries a half counted delivered figure.
+    for row in by_category.values():
+        row["delivered"] = row["attempted"]
 
     # A configured marker the whole run never saw. Annotated per category and collected
     # at run level, because it changes how the row above it reads and a consumer of the

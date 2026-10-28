@@ -12,6 +12,8 @@ forward-looking plan is the [roadmap](https://llmsec.dev/#roadmap).
 
 ### Added
 
+- 2026-10-28: **each SARIF per-category row now states its corpus size beside its delivered count.** The `attacks_withstood` rows already said how many attacks were withstood; they never said how many cases the category corpus holds, so two scans over different probe sets produced rows that looked identical. Each row now carries `corpus_cases` and `delivered`, so a withstood count reads against a delivered count and a corpus count. Categories whose probes are built per target rather than shipped in a corpus carry no `corpus_cases` claim rather than a misleading zero. (Closes #28.)
+
 - 2026-10-26: **every docs page now carries the release banner, which names what
   `pip install` gives.** The banner used to reach only the seven pages that
   included it by hand. It also named the tree version without the pip version.
